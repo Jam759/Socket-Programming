@@ -1,52 +1,50 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
-void error_handling(char* message);
+#include <winsock2.h>
+void ErrorHandling(char* message);
 
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
-	int serv_sock;
-	int clnt_sock;
+	WSADATA wsaData;
+	SOCKET hServSock, hClntSock;
+	SOCKADDR_IN servAddr, clntAddr;
 
-	struct sockaddr_in serv_addr;
-	struct sockaddr_in clnt_addr;
-
+	int szClntAddr;
 	char message[] = "Hello World!";
-	if (argc != 2)
-	{
-		printf("Usage : %s <port>\n", argv[0]);
-	}
-	if (argc != 3)
-	{
-		printf("Usage : %s <IP> <port>\n", argv[0]);
-		exit(1);
-	}
+	//if (argc != 2)
+	//{
+	//	printf("Usage : %s <port>\n", argv[0]);
+	//	exit(1);
+	//}
+	
+	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) ErrorHandling("WSAStartup() error!");
 
-	sock = socket(PE_INET, SOCK_STREAM, 0);
-	if (sock == -1) error_handling("socket() error");
+	hServSock = socket(PF_INET, SOCK_STREAM, 0);
+	if (hServSock == INVALID_SOCKET) ErrorHandling("socket() error");
 
-	memset(&serv_addr, 0, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = inet_addr(argv[1]);
-	serv_addr.sin_port = htons(atoi(argv[2]));
+	memset(&servAddr, 0, sizeof(servAddr));
+	servAddr.sin_family = AF_INET;
+	servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	servAddr.sin_port = htons(atoi("9190"));
 
-	if (connet(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == -1) error_handling("connet() error!");
+	if (bind(hServSock, (SOCKADDR*)&servAddr, sizeof(servAddr)) == SOCKET_ERROR) ErrorHandling("bind() error");
+	if (listen(hServSock, 5) == SOCKET_ERROR) ErrorHandling("listen() error");
 
-	str_len = read(sock, message, sizeof(message) - 1);
-	if (str_len == -1) error_handling("read() error!");
 
-	printf("Message from server : %s \n", message);
-	close(sock);
+	szClntAddr = sizeof(clntAddr);
+	hClntSock = accept(hServSock, (SOCKADDR*)&clntAddr, &szClntAddr);
+	if (hClntSock == INVALID_SOCKET) ErrorHandling("accept() error");
+
+	send(hClntSock, message, sizeof(message), 0);
+	closesocket(hClntSock);
+	closesocket(hServSock);
+	WSACleanup();
 	return 0;
-
 }
 
-void error_handling(char* message)
+void ErrorHandling(char* message)
 {
 	fputs(message, stderr);
-	fputc('b', stderr);
+	fputc('\n', stderr);
 	exit(1);
 }
