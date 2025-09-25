@@ -2,9 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <winsock2.h>
+
+#define SERVER_PORT "9190"
+#define SERVER_IP "127.0.0.1"
+
 void ErrorHandling(char* message);
 
-int main(int argc, char* argv[])
+int main()
 {
 	WSADATA wsaData;
 	SOCKET hSocket;
@@ -12,11 +16,6 @@ int main(int argc, char* argv[])
 
 	char message[30];
 	int strLen;
-	/*if (argc != 3)
-	{
-		printf("Usage : %s <IP> <port>\n", argv[0]);
-		exit(1);
-	}*/
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) ErrorHandling("WSAStartup() error!");
 
@@ -25,8 +24,8 @@ int main(int argc, char* argv[])
 
 	memset(&servAddr, 0, sizeof(servAddr));
 	servAddr.sin_family = AF_INET;
-	servAddr.sin_addr.s_addr = inet_addr("127.0.0.1");	
-	servAddr.sin_port = htons(atoi("9190"));
+	servAddr.sin_addr.s_addr = inet_addr(SERVER_IP);	
+	servAddr.sin_port = htons(atoi(SERVER_PORT));
 
 	if (connect(hSocket, (SOCKADDR*)&servAddr, sizeof(servAddr)) == SOCKET_ERROR) ErrorHandling("connet() error");
 
@@ -36,8 +35,8 @@ int main(int argc, char* argv[])
 	printf("Message from server : %s \n", message);
 
 	closesocket(hSocket);
-	WSACleanup();
 	getchar();
+	WSACleanup();
 	return 0;
 }
 
